@@ -1,9 +1,19 @@
-
 import React, { useState, useEffect } from 'react';
-import { getData, addItem, updateItem, deleteItem } from '../../utils/dataService';
-import FileUploader from '../../components/FileUploader';
-import { Plus, Edit, Trash2, Save, X, Loader } from 'lucide-react';
+import { servicesApi } from '../../utils/apiService';
+import { uploadToCloudinary, deleteFromCloudinary, getOptimizedImageUrl } from '../../utils/cloudinary';
+import { Plus, Edit, Trash2, Save, X, Loader, Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../../components/ui/AlertDialog';
 
 const Services = () => {
   const [services, setServices] = useState([]);
@@ -13,10 +23,15 @@ const Services = () => {
     title: '',
     description: '',
     image: '',
-    icon: ''
+    imagePublicId: '',
+    icon: '',
+    iconPublicId: '',
+    pagePath: ''
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState(null);
 
   useEffect(() => {
     fetchServices();
@@ -24,10 +39,10 @@ const Services = () => {
 
   const fetchServices = async () => {
     try {
-      const data = await getData('services');
+      const data = await servicesApi.getAll();
       setServices(data);
     } catch (error) {
-      toast.error('Error fetching services');
+      toast.error(error.message || 'Error fetching services');
     } finally {
       setIsLoading(false);
     }
@@ -38,12 +53,66 @@ const Services = () => {
     setCurrentService(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleImageUpload = (url) => {
-    setCurrentService(prev => ({ ...prev, image: url }));
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      // Delete old image if exists
+      if (currentService.imagePublicId) {
+        await deleteFromCloudinary(currentService.imagePublicId);
+      }
+
+      const result = await uploadToCloudinary(file, {
+        folder: 'services/images',
+        transformation: 'w_1200,h_800,c_fill,q_auto,f_auto'
+      });
+
+      setCurrentService(prev => ({
+        ...prev,
+        image: result.url,
+        imagePublicId: result.publicId
+      }));
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      toast.error('Error uploading image');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  const handleIconUpload = (url) => {
-    setCurrentService(prev => ({ ...prev, icon: url }));
+  const handleIconUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.type !== 'image/svg+xml') {
+      toast.error('Please upload an SVG file for the icon');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      // Delete old icon if exists
+      if (currentService.iconPublicId) {
+        await deleteFromCloudinary(currentService.iconPublicId);
+      }
+
+      const result = await uploadToCloudinary(file, {
+        folder: 'services/icons'
+      });
+
+      setCurrentService(prev => ({
+        ...prev,
+        icon: result.url,
+        iconPublicId: result.publicId
+      }));
+      toast.success('Icon uploaded successfully');
+    } catch (error) {
+      toast.error('Error uploading icon');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -51,20 +120,52 @@ const Services = () => {
     setIsSaving(true);
 
     try {
+      const serviceData = {
+        ...currentService,
+        image: getOptimizedImageUrl(currentService.image, { width: 1200, height: 800 }),
+        icon: currentService.icon
+      };
+
       if (isEditing) {
-        await updateItem('services', currentService.id, currentService);
+        await servicesApi.update(currentService._id, serviceData);
         toast.success('Service updated successfully');
       } else {
-        await addItem('services', currentService);
+        await servicesApi.create(serviceData);
         toast.success('Service added successfully');
       }
       
       resetForm();
       fetchServices();
     } catch (error) {
-      toast.error(isEditing ? 'Error updating service' : 'Error adding service');
+      toast.error(error.message || (isEditing ? 'Error updating service' : 'Error adding service'));
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDeleteClick = (service) => {
+    setServiceToDelete(service);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!serviceToDelete) return;
+
+    try {
+      // Delete images from Cloudinary
+      if (serviceToDelete.imagePublicId) {
+        await deleteFromCloudinary(serviceToDelete.imagePublicId);
+      }
+      if (serviceToDelete.iconPublicId) {
+        await deleteFromCloudinary(serviceToDelete.iconPublicId);
+      }
+
+      await servicesApi.delete(serviceToDelete._id);
+      toast.success('Service deleted successfully');
+      fetchServices();
+    } catch (error) {
+      toast.error(error.message || 'Error deleting service');
+    } finally {
+      setServiceToDelete(null);
     }
   };
 
@@ -73,7 +174,10 @@ const Services = () => {
       title: '',
       description: '',
       image: '',
-      icon: ''
+      imagePublicId: '',
+      icon: '',
+      iconPublicId: '',
+      pagePath: ''
     });
     setIsEditing(false);
     setIsFormOpen(false);
@@ -85,18 +189,6 @@ const Services = () => {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this service?')) {
-      try {
-        await deleteItem('services', id);
-        toast.success('Service deleted successfully');
-        fetchServices();
-      } catch (error) {
-        toast.error('Error deleting service');
-      }
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -104,6 +196,8 @@ const Services = () => {
       </div>
     );
   }
+
+  console.log("currenlt services", services );
 
   return (
     <div className="space-y-8">
@@ -156,10 +250,30 @@ const Services = () => {
                 <label className="text-sm font-medium text-gray-700">
                   Service Image
                 </label>
-                <FileUploader 
-                  onFileUploaded={handleImageUpload} 
-                  label="Upload Service Image"
-                />
+                <div className="flex items-center space-x-4">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg flex items-center cursor-pointer hover:bg-gray-200 transition-all-smooth"
+                  >
+                    <Upload className="h-5 w-5 mr-2" />
+                    Choose Image
+                  </label>
+                  {isUploading && <Loader className="h-5 w-5 animate-spin" />}
+                  {currentService.image && (
+                    <img
+                      src={currentService.image}
+                      alt="Preview"
+                      className="h-10 w-10 object-cover rounded"
+                    />
+                  )}
+                </div>
               </div>
             </div>
 
@@ -179,14 +293,48 @@ const Services = () => {
             </div>
 
             <div className="space-y-2">
+              <label htmlFor="pagePath" className="text-sm font-medium text-gray-700">
+                Page Path (Optional, e.g., pages/casino)
+              </label>
+              <input
+                id="pagePath"
+                name="pagePath"
+                type="text"
+                value={currentService.pagePath}
+                onChange={handleInputChange}
+                placeholder="pages/casino"
+                className="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all-smooth"
+              />
+            </div>
+
+            <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Service Icon (SVG)
               </label>
-              <FileUploader 
-                onFileUploaded={handleIconUpload} 
-                acceptedTypes="image/svg+xml"
-                label="Upload SVG Icon"
-              />
+              <div className="flex items-center space-x-4">
+                <input
+                  type="file"
+                  accept="image/svg+xml"
+                  onChange={handleIconUpload}
+                  className="hidden"
+                  id="icon-upload"
+                />
+                <label
+                  htmlFor="icon-upload"
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg flex items-center cursor-pointer hover:bg-gray-200 transition-all-smooth"
+                >
+                  <Upload className="h-5 w-5 mr-2" />
+                  Choose Icon
+                </label>
+                {isUploading && <Loader className="h-5 w-5 animate-spin" />}
+                {currentService.icon && (
+                  <img
+                    src={currentService.icon}
+                    alt="Icon Preview"
+                    className="h-10 w-10 object-contain"
+                  />
+                )}
+              </div>
             </div>
 
             <div className="flex justify-end space-x-3">
@@ -199,8 +347,8 @@ const Services = () => {
               </button>
               <button
                 type="submit"
-                disabled={isSaving}
-                className="px-4 py-2 bg-primary text-white rounded-lg flex items-center shadow-sm hover:bg-primary/90 transition-all-smooth"
+                disabled={isSaving || isUploading}
+                className="px-4 py-2 bg-primary text-white rounded-lg flex items-center shadow-sm hover:bg-primary/90 transition-all-smooth disabled:opacity-50"
               >
                 {isSaving ? (
                   <>
@@ -222,13 +370,13 @@ const Services = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {services.map((service) => (
           <div 
-            key={service.id} 
+            key={service._id} 
             className="bg-white rounded-xl shadow-smooth overflow-hidden hover-scale"
           >
             <div className="aspect-video relative">
               <img 
-                src={service.image} 
-                alt={service.title} 
+                src={getOptimizedImageUrl(service.image, { width: 600, height: 400 })}
+                alt={service.title}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
@@ -237,10 +385,13 @@ const Services = () => {
             </div>
             <div className="p-4">
               <div className="flex items-start justify-between mb-3">
-                <div 
-                  className="bg-primary/10 p-2 rounded-lg"
-                  dangerouslySetInnerHTML={{ __html: service.icon }}
-                />
+                {service.icon && (
+                  <img 
+                    src={service.icon}
+                    alt={`${service.title} icon`}
+                    className="w-10 h-10 object-contain"
+                  />
+                )}
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleEdit(service)}
@@ -248,15 +399,45 @@ const Services = () => {
                   >
                     <Edit className="h-5 w-5 text-gray-600" />
                   </button>
-                  <button
-                    onClick={() => handleDelete(service.id)}
-                    className="p-2 rounded-lg hover:bg-red-100 transition-all-smooth"
+                  <AlertDialog 
+                    open={serviceToDelete?._id === service._id} 
+                    onOpenChange={(open) => !open && setServiceToDelete(null)}
                   >
-                    <Trash2 className="h-5 w-5 text-red-500" />
-                  </button>
+                    <AlertDialogTrigger asChild>
+                      <button
+                        onClick={() => handleDeleteClick(service)}
+                        className="p-2 rounded-lg hover:bg-red-100 transition-all-smooth"
+                      >
+                        <Trash2 className="h-5 w-5 text-red-500" />
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the service
+                          "{service.title}" and remove all associated data.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteConfirm}
+                          className="bg-red-500 hover:bg-red-600 focus:ring-red-500"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
               <p className="text-gray-600 text-sm">{service.description}</p>
+              {service.pagePath && (
+                <p className="text-blue-600 text-xs mt-2">
+                  Path: {service.pagePath}
+                </p>
+              )}
             </div>
           </div>
         ))}

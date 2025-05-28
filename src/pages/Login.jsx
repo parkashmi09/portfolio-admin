@@ -1,38 +1,38 @@
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { login, isAuthenticated } from '../utils/auth';
 import { toast } from 'sonner';
 import { LogIn, Mail, Lock, Loader } from 'lucide-react';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // If already authenticated, redirect to admin dashboard
     if (isAuthenticated()) {
-      navigate('/admin');
+      const from = location.state?.from?.pathname || '/admin';
+      navigate(from, { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, location]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    setTimeout(() => {
-      const success = login(email, password);
-      
-      if (success) {
-        toast.success('Login successful');
-        navigate('/admin');
-      } else {
-        toast.error('Invalid credentials');
-        setIsLoading(false);
-      }
-    }, 800); // Simulate API call
+    try {
+      await login(username, password);
+      toast.success('Login successful');
+      // Redirect to the page they tried to visit or admin dashboard
+      const from = location.state?.from?.pathname || '/admin';
+      navigate(from, { replace: true });
+    } catch (error) {
+      toast.error(error.message || 'Login failed');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -47,19 +47,19 @@ const Login = () => {
           <form onSubmit={handleSubmit}>
             <div className="space-y-5">
               <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                  Email
+                <label htmlFor="username" className="text-sm font-medium text-gray-700">
+                  Username
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Mail className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@example.com"
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Enter your username"
                     className="block w-full pl-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all-smooth"
                     required
                   />
@@ -89,20 +89,25 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all-smooth"
+                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all-smooth disabled:opacity-50"
               >
                 {isLoading ? (
-                  <Loader className="h-5 w-5 animate-spin mr-2" />
+                  <>
+                    <Loader className="h-5 w-5 animate-spin mr-2" />
+                    Signing In...
+                  </>
                 ) : (
-                  <LogIn className="h-5 w-5 mr-2" />
+                  <>
+                    <LogIn className="h-5 w-5 mr-2" />
+                    Sign In
+                  </>
                 )}
-                {isLoading ? 'Signing In...' : 'Sign In'}
               </button>
             </div>
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-500">
-            <p>For demo: email: admin@example.com | password: admin123</p>
+            <p>Demo credentials: username: adminUser@0123 | password: adminUser123</p>
           </div>
         </div>
       </div>

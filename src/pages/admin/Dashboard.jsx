@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { getData } from '../../utils/dataService';
+import { servicesApi, blogsApi, heroApi } from '../../utils/apiService';
 import { Link } from 'react-router-dom';
 import { 
   Settings, 
@@ -9,7 +9,8 @@ import {
   MessageSquare, 
   Image, 
   Star,
-  ArrowUpRight
+  ArrowUpRight,
+  Layout
 } from 'lucide-react';
 
 const StatCard = ({ title, count, icon: Icon, linkTo, color }) => {
@@ -93,43 +94,61 @@ const Dashboard = () => {
     products: [],
     contacts: [],
     logos: [],
-    reviews: []
+    reviews: [],
+    hero: []
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Fetch data for dashboard stats
     const fetchData = async () => {
-      const services = await getData('services');
-      const blogs = await getData('blogs');
-      const products = await getData('products');
-      const contacts = await getData('contacts');
-      const logos = await getData('logos');
-      const reviews = await getData('reviews');
+      try {
+        setIsLoading(true);
+        const services = await servicesApi.getAll();
+        const blogs = await blogsApi.getAll();
+        const products = await getData('products');
+        const contacts = await getData('contacts');
+        const logos = await getData('logos');
+        const reviews = await getData('reviews');
+        const hero = await heroApi.getAll();
 
-      setStats({
-        services,
-        blogs,
-        products,
-        contacts,
-        logos,
-        reviews
-      });
+        setStats({
+          services: services || [],
+          blogs: blogs || [],
+          products: products || [],
+          contacts: contacts || [],
+          logos: logos || [],
+          reviews: reviews || [],
+          hero: hero || []
+        });
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchData();
   }, []);
 
   const statCards = [
+    {
+      title: 'Hero Slides',
+      count: stats.hero.length || 0,
+      icon: Layout,
+      linkTo: '/admin/hero',
+      color: 'bg-indigo-500'
+    },
     { 
       title: 'Services', 
-      count: stats.services.length, 
+      count: stats.services.length || 0, 
       icon: Settings, 
       linkTo: '/admin/services',
       color: 'bg-blue-500'
     },
     { 
       title: 'Blogs', 
-      count: stats.blogs.length, 
+      count: stats.blogs.length || 0, 
       icon: FileText, 
       linkTo: '/admin/blogs',
       color: 'bg-green-500'
@@ -163,6 +182,14 @@ const Dashboard = () => {
       color: 'bg-pink-500'
     }
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

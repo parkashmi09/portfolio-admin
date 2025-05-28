@@ -16,6 +16,7 @@ import Logos from "./pages/admin/Logos";
 import Reviews from "./pages/admin/Reviews";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/AdminLayout";
+import Hero from "./pages/admin/Hero";
 
 const queryClient = new QueryClient();
 
@@ -99,7 +100,16 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
-          
+          <Route 
+            path="/admin/hero" 
+            element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <Hero/>
+                </AdminLayout>
+              </ProtectedRoute>
+            } 
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

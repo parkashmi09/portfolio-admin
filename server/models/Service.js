@@ -51,14 +51,8 @@ const ServiceSchema = new mongoose.Schema({
       }
     },
     icon: {
-      url: {
-        type: String,
-        required: false,
-      },
-      publicId: {
-        type: String,
-        required: true,
-      }
+      url: String,
+      publicId: String
     },
     cta: {
       type: String,

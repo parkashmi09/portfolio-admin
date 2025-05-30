@@ -296,15 +296,20 @@ const Services = () => {
       return;
     }
 
+    const slideToAdd = {
+      ...currentSlide,
+      icon: currentSlide.icon?.url ? currentSlide.icon : undefined
+    };
+
     if (editingSlideIndex >= 0) {
       const updatedSlides = [...currentService.slides];
-      updatedSlides[editingSlideIndex] = currentSlide;
+      updatedSlides[editingSlideIndex] = slideToAdd;
       setCurrentService(prev => ({ ...prev, slides: updatedSlides }));
       setEditingSlideIndex(-1);
     } else {
       setCurrentService(prev => ({
         ...prev,
-        slides: [...prev.slides, currentSlide]
+        slides: [...prev.slides, slideToAdd]
       }));
     }
 

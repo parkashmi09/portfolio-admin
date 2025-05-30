@@ -63,6 +63,17 @@ exports.createService = async (req, res) => {
       });
     }
 
+    // Validate slides if provided
+    if (slides && Array.isArray(slides)) {
+      for (const slide of slides) {
+        if (!slide.title || !slide.content || !slide.image?.url || !slide.image?.publicId) {
+          return res.status(400).json({
+            message: 'Each slide must have a title, content, and image (with url and publicId)'
+          });
+        }
+      }
+    }
+
     // Create new service
     const newService = new Service({
       title: title.trim(),
@@ -120,6 +131,17 @@ exports.updateService = async (req, res) => {
       return res.status(400).json({
         message: 'Please provide all required fields: title, description, image, and imagePublicId'
       });
+    }
+
+    // Validate slides if provided
+    if (slides && Array.isArray(slides)) {
+      for (const slide of slides) {
+        if (!slide.title || !slide.content || !slide.image?.url || !slide.image?.publicId) {
+          return res.status(400).json({
+            message: 'Each slide must have a title, content, and image (with url and publicId)'
+          });
+        }
+      }
     }
 
     // Find service and update

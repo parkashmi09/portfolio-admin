@@ -77,6 +77,21 @@ export const servicesApi = {
     } catch (error) {
       return handleError(error);
     }
+  },
+
+  reorder: async (services) => {
+    try {
+      const response = await fetch(`${API_URL}/admin/services/reorder`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ services })
+      });
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
+    }
   }
 };
 

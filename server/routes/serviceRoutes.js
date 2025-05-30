@@ -5,7 +5,8 @@ const {
   getServiceById,
   createService,
   updateService,
-  deleteService
+  deleteService,
+  reorderServices
 } = require('../controllers/serviceController');
 
 // @route   GET /api/admin/services
@@ -32,5 +33,10 @@ router.put('/:id', updateService);
 // @desc    Delete a service
 // @access  Public
 router.delete('/:id', deleteService);
+
+// @route   PUT /api/admin/services/reorder
+// @desc    Reorder services
+// @access  Public
+router.put('/reorder', reorderServices);
 
 module.exports = router; 

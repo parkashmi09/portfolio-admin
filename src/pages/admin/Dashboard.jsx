@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getData } from '../../utils/dataService';
-import { servicesApi, blogsApi, heroApi } from '../../utils/apiService';
+import { servicesApi, blogsApi, heroApi, productApi } from '../../utils/apiService';
 import { Link } from 'react-router-dom';
 import { 
   Settings, 
@@ -106,7 +106,7 @@ const Dashboard = () => {
         setIsLoading(true);
         const services = await servicesApi.getAll();
         const blogs = await blogsApi.getAll();
-        const products = await getData('products');
+        const products = await productApi.getAll();
         const contacts = await getData('contacts');
         const logos = await getData('logos');
         const reviews = await getData('reviews');

@@ -53,7 +53,7 @@ const ServiceSchema = new mongoose.Schema({
     icon: {
       url: {
         type: String,
-        required: true,
+        required: false,
       },
       publicId: {
         type: String,

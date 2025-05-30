@@ -9,7 +9,14 @@ const ProductForm = ({ product: initialProduct, isEditing, isSaving, onSubmit, o
     hero: false,
     audio: false,
     preview: false,
-    showcase: false
+    showcase: false,
+    feature: false
+  });
+  const [currentFeature, setCurrentFeature] = useState({
+    title: '',
+    description: '',
+    iconUrl: '',
+    iconPublicId: ''
   });
   const [currentPreviewItem, setCurrentPreviewItem] = useState({
     title: '',
@@ -22,6 +29,7 @@ const ProductForm = ({ product: initialProduct, isEditing, isSaving, onSubmit, o
     desktop: { url: '', publicId: '' },
     mobile: { url: '', publicId: '' }
   });
+  const [editingFeatureIndex, setEditingFeatureIndex] = useState(-1);
   const [editingPreviewIndex, setEditingPreviewIndex] = useState(-1);
   const [editingShowcaseIndex, setEditingShowcaseIndex] = useState(-1);
 
@@ -55,6 +63,14 @@ const ProductForm = ({ product: initialProduct, isEditing, isSaving, onSubmit, o
   const handleShowcaseItemChange = (e) => {
     const { name, value } = e.target;
     setCurrentShowcaseItem(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleFeatureChange = (e) => {
+    const { name, value } = e.target;
+    setCurrentFeature(prev => ({
       ...prev,
       [name]: value
     }));
@@ -180,6 +196,34 @@ const ProductForm = ({ product: initialProduct, isEditing, isSaving, onSubmit, o
     }
   };
 
+  const handleFeatureIconUpload = async (file) => {
+    if (!file) return;
+
+    setIsUploading(prev => ({ ...prev, feature: true }));
+    try {
+      // Delete old icon if exists
+      if (currentFeature.iconPublicId) {
+        await deleteFromCloudinary(currentFeature.iconPublicId);
+      }
+
+      const result = await uploadToCloudinary(file, {
+        folder: 'products/features',
+        transformation: 'q_auto,f_auto'
+      });
+
+      setCurrentFeature(prev => ({
+        ...prev,
+        iconUrl: result.url,
+        iconPublicId: result.publicId
+      }));
+      toast.success('Feature icon uploaded successfully');
+    } catch (error) {
+      toast.error('Error uploading feature icon');
+    } finally {
+      setIsUploading(prev => ({ ...prev, feature: false }));
+    }
+  };
+
   const addPreviewItem = () => {
     if (!currentPreviewItem.title || !currentPreviewItem.desktop.url) {
       toast.error('Please provide a title and desktop image');
@@ -237,6 +281,38 @@ const ProductForm = ({ product: initialProduct, isEditing, isSaving, onSubmit, o
     });
   };
 
+  const addFeature = () => {
+    if (!currentFeature.title || !currentFeature.description || !currentFeature.iconUrl) {
+      toast.error('Please provide title, description, and icon for the feature');
+      return;
+    }
+
+    if (editingFeatureIndex >= 0) {
+      // Update existing feature
+      const updatedFeatures = [...(product.features || [])];
+      updatedFeatures[editingFeatureIndex] = currentFeature;
+      setProduct(prev => ({
+        ...prev,
+        features: updatedFeatures
+      }));
+      setEditingFeatureIndex(-1);
+    } else {
+      // Add new feature
+      setProduct(prev => ({
+        ...prev,
+        features: [...(prev.features || []), currentFeature]
+      }));
+    }
+
+    // Reset form
+    setCurrentFeature({
+      title: '',
+      description: '',
+      iconUrl: '',
+      iconPublicId: ''
+    });
+  };
+
   const editPreviewItem = (index) => {
     setCurrentPreviewItem(product.previewItems[index]);
     setEditingPreviewIndex(index);
@@ -245,6 +321,14 @@ const ProductForm = ({ product: initialProduct, isEditing, isSaving, onSubmit, o
   const editShowcaseItem = (index) => {
     setCurrentShowcaseItem(product.showcaseItems[index]);
     setEditingShowcaseIndex(index);
+  };
+
+  const editFeature = (index) => {
+    const feature = product.features?.[index];
+    if (feature) {
+      setCurrentFeature(feature);
+      setEditingFeatureIndex(index);
+    }
   };
 
   const removePreviewItem = async (index) => {
@@ -306,6 +390,38 @@ const ProductForm = ({ product: initialProduct, isEditing, isSaving, onSubmit, o
         description: '',
         desktop: { url: '', publicId: '' },
         mobile: { url: '', publicId: '' }
+      });
+    }
+  };
+
+  const removeFeature = async (index) => {
+    const feature = product.features?.[index];
+    
+    // Delete icon from Cloudinary
+    try {
+      if (feature?.iconPublicId) {
+        await deleteFromCloudinary(feature.iconPublicId);
+      }
+    } catch (error) {
+      toast.error('Error deleting feature icon');
+    }
+    
+    // Remove feature from array
+    const updatedFeatures = [...(product.features || [])];
+    updatedFeatures.splice(index, 1);
+    setProduct(prev => ({
+      ...prev,
+      features: updatedFeatures
+    }));
+    
+    // Reset editing state if needed
+    if (editingFeatureIndex === index) {
+      setEditingFeatureIndex(-1);
+      setCurrentFeature({
+        title: '',
+        description: '',
+        iconUrl: '',
+        iconPublicId: ''
       });
     }
   };
@@ -493,6 +609,128 @@ const ProductForm = ({ product: initialProduct, isEditing, isSaving, onSubmit, o
             className="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all-smooth"
           />
         </div>
+      </div>
+
+      {/* Features Section */}
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <h3 className="text-lg font-medium mb-4">Features</h3>
+        
+        {/* Add Feature Form */}
+        <div className="space-y-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="featureTitle" className="text-sm font-medium text-gray-700">
+                Title
+              </label>
+              <input
+                id="featureTitle"
+                name="title"
+                type="text"
+                value={currentFeature.title}
+                onChange={handleFeatureChange}
+                className="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all-smooth"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="featureDescription" className="text-sm font-medium text-gray-700">
+                Description
+              </label>
+              <input
+                id="featureDescription"
+                name="description"
+                type="text"
+                value={currentFeature.description}
+                onChange={handleFeatureChange}
+                className="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all-smooth"
+              />
+            </div>
+          </div>
+          
+          {/* Icon Upload */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Icon
+            </label>
+            <div className="flex items-center space-x-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFeatureIconUpload(e.target.files[0])}
+                className="hidden"
+                id="feature-icon-upload"
+              />
+              <label
+                htmlFor="feature-icon-upload"
+                className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg flex items-center cursor-pointer hover:bg-gray-200 text-sm transition-all-smooth"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Upload Icon
+              </label>
+              {isUploading.feature && <Loader className="h-4 w-4 animate-spin" />}
+              {currentFeature.iconUrl && (
+                <img
+                  src={currentFeature.iconUrl}
+                  alt="Feature Icon"
+                  className="h-8 w-8 object-contain rounded"
+                />
+              )}
+            </div>
+          </div>
+          
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={addFeature}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center shadow-sm hover:bg-blue-700 transition-all-smooth"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              {editingFeatureIndex >= 0 ? 'Update Feature' : 'Add Feature'}
+            </button>
+          </div>
+        </div>
+        
+        {/* Features List */}
+        { product.features && product.features.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-gray-700">Added Features:</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {product.features.map((feature, index) => (
+                <div key={index} className="bg-white p-3 rounded-lg border border-gray-200 flex justify-between items-start">
+                  <div className="flex space-x-3">
+                    {feature.iconUrl && (
+                      <img 
+                        src={feature.iconUrl} 
+                        alt={feature.title} 
+                        className="w-8 h-8 object-contain rounded flex-shrink-0"
+                      />
+                    )}
+                    <div>
+                      <h5 className="font-medium text-sm">{feature.title}</h5>
+                      <p className="text-xs text-gray-500 line-clamp-2">{feature.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-1 ml-2 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => editFeature(index)}
+                      className="p-1.5 rounded-lg hover:bg-gray-100"
+                    >
+                      <Edit className="h-4 w-4 text-gray-600" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeFeature(index)}
+                      className="p-1.5 rounded-lg hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Preview Items Section */}

@@ -45,6 +45,7 @@ exports.createProduct = async (req, res) => {
       heroImage,
       audio,
       cta,
+      features,
       previewItems,
       showcaseItems,
       active,
@@ -67,6 +68,7 @@ exports.createProduct = async (req, res) => {
       heroImage,
       audio: audio || { url: '', publicId: '' },
       cta: cta || { text: 'Get Started', secondaryText: 'View Demo' },
+      features: features || [],
       previewItems: previewItems || [],
       showcaseItems: showcaseItems || [],
       active: active !== undefined ? active : true,
@@ -96,6 +98,7 @@ exports.updateProduct = async (req, res) => {
       heroImage,
       audio,
       cta,
+      features,
       previewItems,
       showcaseItems,
       active,
@@ -123,6 +126,7 @@ exports.updateProduct = async (req, res) => {
     product.heroImage = heroImage;
     product.audio = audio || { url: '', publicId: '' };
     product.cta = cta || { text: 'Get Started', secondaryText: 'View Demo' };
+    product.features = features || [];
     product.previewItems = previewItems || [];
     product.showcaseItems = showcaseItems || [];
     product.active = active !== undefined ? active : product.active;

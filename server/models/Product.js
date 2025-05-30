@@ -50,6 +50,27 @@ const productSchema = new mongoose.Schema({
       default: 'View Demo'
     }
   },
+  // Features section
+  features: [{
+    title: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    description: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    iconUrl: {
+      type: String,
+      required: true
+    },
+    iconPublicId: {
+      type: String,
+      required: true
+    }
+  }],
   // Live preview items
   previewItems: [{
     title: {

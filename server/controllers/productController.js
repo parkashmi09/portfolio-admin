@@ -41,6 +41,7 @@ exports.createProduct = async (req, res) => {
   try {
     const {
       title,
+      subtitle,
       description,
       heroImage,
       audio,
@@ -54,15 +55,16 @@ exports.createProduct = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!title || !description || !heroImage || !heroImage.url || !heroImage.publicId || !pagePath) {
+    if (!title || !subtitle || !description || !heroImage || !heroImage.url || !heroImage.publicId || !pagePath) {
       return res.status(400).json({
-        message: 'Please provide all required fields: title, description, heroImage, and pagePath'
+        message: 'Please provide all required fields: title, subtitle, description, heroImage, and pagePath'
       });
     }
 
     // Create new product
     const newProduct = new Product({
       title: title.trim(),
+      subtitle: subtitle.trim(),
       description: description.trim(),
       pagePath: pagePath.trim(),
       heroImage,
@@ -94,6 +96,7 @@ exports.updateProduct = async (req, res) => {
   try {
     const {
       title,
+      subtitle,
       description,
       heroImage,
       audio,
@@ -107,9 +110,9 @@ exports.updateProduct = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!title || !description || !heroImage || !heroImage.url || !heroImage.publicId || !pagePath) {
+    if (!title || !subtitle || !description || !heroImage || !heroImage.url || !heroImage.publicId || !pagePath) {
       return res.status(400).json({
-        message: 'Please provide all required fields: title, description, heroImage, and pagePath'
+        message: 'Please provide all required fields: title, subtitle, description, heroImage, and pagePath'
       });
     }
 
@@ -121,6 +124,7 @@ exports.updateProduct = async (req, res) => {
 
     // Update fields
     product.title = title.trim();
+    product.subtitle = subtitle.trim();
     product.description = description.trim();
     product.pagePath = pagePath.trim();
     product.heroImage = heroImage;

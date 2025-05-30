@@ -451,6 +451,21 @@ const ProductForm = ({ product: initialProduct, isEditing, isSaving, onSubmit, o
         </div>
 
         <div>
+          <label htmlFor="subtitle" className="block text-sm font-medium text-gray-700">
+            Subtitle
+          </label>
+          <input
+            type="text"
+            id="subtitle"
+            name="subtitle"
+            value={product.subtitle}
+            onChange={handleInputChange}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+            required
+          />
+        </div>
+
+        <div>
           <label htmlFor="pagePath" className="block text-sm font-medium text-gray-700">
             Page Path
           </label>

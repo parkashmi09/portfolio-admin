@@ -12,6 +12,7 @@ const Products = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentProduct, setCurrentProduct] = useState({
     title: '',
+    subtitle: '',
     description: '',
     pagePath: '',
     heroImage: { url: '', publicId: '' },
@@ -67,6 +68,7 @@ const Products = () => {
   const resetForm = () => {
     setCurrentProduct({
       title: '',
+      subtitle: '',
       description: '',
       pagePath: '',
       heroImage: { url: '', publicId: '' },

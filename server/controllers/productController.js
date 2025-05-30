@@ -48,13 +48,14 @@ exports.createProduct = async (req, res) => {
       previewItems,
       showcaseItems,
       active,
-      order
+      order,
+      pagePath
     } = req.body;
 
     // Validate required fields
-    if (!title || !description || !heroImage || !heroImage.url || !heroImage.publicId) {
+    if (!title || !description || !heroImage || !heroImage.url || !heroImage.publicId || !pagePath) {
       return res.status(400).json({
-        message: 'Please provide all required fields: title, description, and heroImage'
+        message: 'Please provide all required fields: title, description, heroImage, and pagePath'
       });
     }
 
@@ -62,6 +63,7 @@ exports.createProduct = async (req, res) => {
     const newProduct = new Product({
       title: title.trim(),
       description: description.trim(),
+      pagePath: pagePath.trim(),
       heroImage,
       audio: audio || { url: '', publicId: '' },
       cta: cta || { text: 'Get Started', secondaryText: 'View Demo' },
@@ -97,13 +99,14 @@ exports.updateProduct = async (req, res) => {
       previewItems,
       showcaseItems,
       active,
-      order
+      order,
+      pagePath
     } = req.body;
 
     // Validate required fields
-    if (!title || !description || !heroImage || !heroImage.url || !heroImage.publicId) {
+    if (!title || !description || !heroImage || !heroImage.url || !heroImage.publicId || !pagePath) {
       return res.status(400).json({
-        message: 'Please provide all required fields: title, description, and heroImage'
+        message: 'Please provide all required fields: title, description, heroImage, and pagePath'
       });
     }
 
@@ -116,6 +119,7 @@ exports.updateProduct = async (req, res) => {
     // Update fields
     product.title = title.trim();
     product.description = description.trim();
+    product.pagePath = pagePath.trim();
     product.heroImage = heroImage;
     product.audio = audio || { url: '', publicId: '' };
     product.cta = cta || { text: 'Get Started', secondaryText: 'View Demo' };

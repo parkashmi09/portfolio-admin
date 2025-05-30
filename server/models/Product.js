@@ -6,6 +6,12 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Product title is required'],
     trim: true
   },
+  pagePath: {
+    type: String,
+    required: [true, 'Page path is required'],
+    trim: true,
+    unique: true
+  },
   description: {
     type: String,
     required: [true, 'Product description is required'],

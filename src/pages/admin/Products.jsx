@@ -13,6 +13,7 @@ const Products = () => {
   const [currentProduct, setCurrentProduct] = useState({
     title: '',
     description: '',
+    pagePath: '',
     heroImage: { url: '', publicId: '' },
     audio: { url: '', publicId: '' },
     cta: { text: 'Get Started', secondaryText: 'View Demo' },
@@ -66,6 +67,7 @@ const Products = () => {
     setCurrentProduct({
       title: '',
       description: '',
+      pagePath: '',
       heroImage: { url: '', publicId: '' },
       audio: { url: '', publicId: '' },
       cta: { text: 'Get Started', secondaryText: 'View Demo' },

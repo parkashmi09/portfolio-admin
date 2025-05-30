@@ -318,49 +318,65 @@ const ProductForm = ({ product: initialProduct, isEditing, isSaving, onSubmit, o
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label htmlFor="title" className="text-sm font-medium text-gray-700">
-            Product Title
+      <div className="space-y-4">
+        <div>
+          <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+            Title
           </label>
           <input
+            type="text"
             id="title"
             name="title"
-            type="text"
             value={product.title}
             onChange={handleInputChange}
-            className="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all-smooth"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
             required
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 flex items-center">
-            <input
-              type="checkbox"
-              name="active"
-              checked={product.active}
-              onChange={handleInputChange}
-              className="mr-2 rounded border-gray-300 text-primary focus:ring-primary"
-            />
-            Active
+        <div>
+          <label htmlFor="pagePath" className="block text-sm font-medium text-gray-700">
+            Page Path
           </label>
+          <input
+            type="text"
+            id="pagePath"
+            name="pagePath"
+            value={product.pagePath}
+            onChange={handleInputChange}
+            placeholder="/products/your-product-path"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+            Description
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            value={product.description}
+            onChange={handleInputChange}
+            rows={4}
+            className="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all-smooth"
+            required
+          />
         </div>
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="description" className="text-sm font-medium text-gray-700">
-          Product Description
+        <label className="text-sm font-medium text-gray-700 flex items-center">
+          <input
+            type="checkbox"
+            name="active"
+            checked={product.active}
+            onChange={handleInputChange}
+            className="mr-2 rounded border-gray-300 text-primary focus:ring-primary"
+          />
+          Active
         </label>
-        <textarea
-          id="description"
-          name="description"
-          value={product.description}
-          onChange={handleInputChange}
-          rows={4}
-          className="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all-smooth"
-          required
-        />
       </div>
 
       {/* Hero Image Upload */}

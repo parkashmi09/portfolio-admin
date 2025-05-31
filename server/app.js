@@ -6,16 +6,27 @@ const cors = require('cors');
 
 const app = express();
 
-// Middleware for CORS
-app.use(cors({
-  origin: '*', // Allow all origins
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
-  credentials: false // Set to true if you need to allow credentials (cookies, etc.)
-}));
+// Custom CORS middleware to ensure proper headers
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*'); // Allow all origins
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'); // Allowed methods
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization'); // Allowed headers
+  res.header('Access-Control-Max-Age', '86400'); // Cache preflight response for 24 hours
 
-// Handle preflight OPTIONS requests
-app.options('*', cors()); // Enable preflight for all routes
+  // Handle preflight OPTIONS requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
+
+// Use the cors middleware as a fallback
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  credentials: false
+}));
 
 app.use(express.json({ limit: '50mb' }));
 
@@ -39,6 +50,8 @@ app.get('/', (req, res) => res.send('API Running'));
 
 // Routes
 app.use('/api/contacts', require('./routes/contactRoutes'));
+// Ensure the auth route is also defined if this server handles /api/auth/login
+app.use('/api/auth', require('./routes/authRoutes')); // Add this line if authRoutes exists
 
 // Error handling middleware
 app.use((err, req, res, next) => {

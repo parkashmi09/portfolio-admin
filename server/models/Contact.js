@@ -1,28 +1,34 @@
 const mongoose = require('mongoose');
 
-const ContactSchema = new mongoose.Schema({
+const contactSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    trim: true,
   },
   email: {
     type: String,
     required: true,
-    trim: true,
+  },
+  phone: {
+    type: String,
+  },
+  service: {
+    type: String,
   },
   message: {
     type: String,
     required: true,
   },
-  receivedAt: {
+  date: {
     type: Date,
     default: Date.now,
   },
-  isRead: {
-    type: Boolean,
-    default: false,
+  source: {
+    type: String,
+    enum: ['Google', 'Social Media', 'Referral', 'Direct', 'Other'],
+    default: 'Direct'
   }
 });
 
-module.exports = mongoose.model('Contact', ContactSchema); 
+// Check if the model exists before compiling it
+module.exports = mongoose.models.Contact || mongoose.model('Contact', contactSchema);

@@ -19,6 +19,7 @@ app.get('/', (req, res) => res.send('API Running'));
 
 // Placeholder for Auth routes
 app.use('/api/auth', require('./routes/authRoutes')); 
+app.use('/api/contacts', require('./routes/contactRoutes'));
 
 // Placeholder for Admin routes (will be more specific later)
 app.use('/api/admin/blogs', require('./routes/blogRoutes'));

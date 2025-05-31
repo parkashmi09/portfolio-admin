@@ -1,33 +1,41 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-const connectDB = require('./config/db');
-
 const app = express();
-
-// Connect to Database
-connectDB();
 
 // Middleware
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '50mb' }));
 
+// Connect to MongoDB
+console.log('Attempting to connect to MongoDB with URI:', process.env.MONGO_URI);
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
+
+// Handle MongoDB connection errors
+mongoose.connection.on('error', err => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
+
 // Define Routes
 app.get('/', (req, res) => res.send('API Running'));
 
-// Placeholder for Auth routes
-app.use('/api/auth', require('./routes/authRoutes')); 
+// Routes
+app.use('/api/contacts', require('./routes/contactRoutes'));
 
-// Placeholder for Admin routes (will be more specific later)
-app.use('/api/admin/blogs', require('./routes/blogRoutes'));
-app.use('/api/admin/contacts', require('./routes/contactRoutes'));
-app.use('/api/admin/logos', require('./routes/logoRoutes'));
-app.use('/api/admin/products', require('./routes/productRoutes'));
-app.use('/api/admin/reviews', require('./routes/reviewRoutes'));
-app.use('/api/admin/services', require('./routes/serviceRoutes'));
-app.use('/api/admin/hero', require('./routes/heroRoutes'));
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong!' });
+});
 
 const PORT = process.env.PORT || 5002;
 

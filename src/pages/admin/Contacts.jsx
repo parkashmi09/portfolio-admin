@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
-import { getData, deleteItem } from '../../utils/dataService';
-import { Search, Trash2, Loader, Phone, Mail, ExternalLink, Filter } from 'lucide-react';
+import { Search, Trash2, Loader, Phone, Mail, ExternalLink, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { getContacts, deleteContact } from '../../services/contactService';
 
 const Contacts = () => {
   const [contacts, setContacts] = useState([]);
@@ -11,12 +10,16 @@ const Contacts = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSource, setSelectedSource] = useState('');
   const [sortBy, setSortBy] = useState('date-desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalContacts, setTotalContacts] = useState(0);
+  const itemsPerPage = 10;
 
   const sources = ['Google', 'Social Media', 'Referral', 'Direct', 'Other'];
 
   useEffect(() => {
     fetchContacts();
-  }, []);
+  }, [currentPage]);
 
   useEffect(() => {
     filterContacts();
@@ -24,9 +27,12 @@ const Contacts = () => {
 
   const fetchContacts = async () => {
     try {
-      const data = await getData('contacts');
-      setContacts(data);
-      setFilteredContacts(data);
+      setIsLoading(true);
+      const data = await getContacts(currentPage, itemsPerPage);
+      setContacts(data.contacts);
+      setFilteredContacts(data.contacts);
+      setTotalPages(data.totalPages);
+      setTotalContacts(data.totalContacts);
     } catch (error) {
       toast.error('Error fetching contacts');
     } finally {
@@ -37,7 +43,6 @@ const Contacts = () => {
   const filterContacts = () => {
     let results = [...contacts];
     
-    // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       results = results.filter(
@@ -48,12 +53,10 @@ const Contacts = () => {
       );
     }
     
-    // Apply source filter
     if (selectedSource) {
       results = results.filter(contact => contact.source === selectedSource);
     }
     
-    // Apply sorting
     switch (sortBy) {
       case 'date-asc':
         results.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -77,7 +80,7 @@ const Contacts = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this contact?')) {
       try {
-        await deleteItem('contacts', id);
+        await deleteContact(id);
         toast.success('Contact deleted successfully');
         fetchContacts();
       } catch (error) {
@@ -90,6 +93,11 @@ const Contacts = () => {
     setSearchTerm('');
     setSelectedSource('');
     setSortBy('date-desc');
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   const formatDate = (dateString) => {
@@ -165,89 +173,113 @@ const Contacts = () => {
         </div>
 
         {filteredContacts.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-500 border-b">Name</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-500 border-b">Contact Info</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-500 border-b">Source</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-500 border-b">Date</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-500 border-b">Message</th>
-                  <th className="py-3 px-4 text-right text-sm font-medium text-gray-500 border-b">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredContacts.map((contact) => (
-                  <tr key={contact.id} className="hover:bg-gray-50 transition-all-smooth">
-                    <td className="py-4 px-4 border-b">
-                      <div className="font-medium text-gray-900">{contact.name}</div>
-                    </td>
-                    <td className="py-4 px-4 border-b">
-                      <div className="flex flex-col space-y-1">
-                        <div className="flex items-center text-gray-500">
-                          <Mail className="h-4 w-4 mr-2" />
-                          <a 
-                            href={`mailto:${contact.email}`} 
-                            className="hover:text-primary"
-                          >
-                            {contact.email}
-                          </a>
-                        </div>
-                        {contact.phone && (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500 border-b">Name</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500 border-b">Contact Info</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500 border-b">Source</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500 border-b">Date</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500 border-b">Message</th>
+                    <th className="py-3 px-4 text-right text-sm font-medium text-gray-500 border-b">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredContacts.map((contact) => (
+                    <tr key={contact._id} className="hover:bg-gray-50 transition-all-smooth">
+                      <td className="py-4 px-4 border-b">
+                        <div className="font-medium text-gray-900">{contact.name}</div>
+                      </td>
+                      <td className="py-4 px-4 border-b">
+                        <div className="flex flex-col space-y-1">
                           <div className="flex items-center text-gray-500">
-                            <Phone className="h-4 w-4 mr-2" />
+                            <Mail className="h-4 w-4 mr-2" />
                             <a 
-                              href={`tel:${contact.phone}`} 
+                              href={`mailto:${contact.email}`} 
                               className="hover:text-primary"
                             >
-                              {contact.phone}
+                              {contact.email}
                             </a>
                           </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-4 px-4 border-b">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {contact.source}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 border-b text-gray-500">
-                      {formatDate(contact.date)}
-                    </td>
-                    <td className="py-4 px-4 border-b">
-                      <div className="max-w-xs truncate text-gray-500" title={contact.message}>
-                        {contact.message}
-                      </div>
-                    </td>
-                    <td className="py-4 px-4 border-b text-right">
-                      <div className="flex justify-end space-x-2">
-                        <button
-                          onClick={() => {
-                            const mailtoBody = encodeURIComponent(
-                              `Hello ${contact.name},\n\nThank you for your message. I'm writing in response to your inquiry.\n\nBest regards,\nYour Name`
-                            );
-                            window.open(`mailto:${contact.email}?subject=Re: Your Inquiry&body=${mailtoBody}`);
-                          }}
-                          className="p-2 rounded-lg hover:bg-blue-100 transition-all-smooth text-blue-600"
-                          title="Reply by email"
-                        >
-                          <ExternalLink className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(contact.id)}
-                          className="p-2 rounded-lg hover:bg-red-100 transition-all-smooth text-red-500"
-                          title="Delete contact"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          {contact.phone && (
+                            <div className="flex items-center text-gray-500">
+                              <Phone className="h-4 w-4 mr-2" />
+                              <a 
+                                href={`tel:${contact.phone}`} 
+                                className="hover:text-primary"
+                              >
+                                {contact.phone}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 border-b">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {contact.source}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 border-b text-gray-500">
+                        {formatDate(contact.date)}
+                      </td>
+                      <td className="py-4 px-4 border-b">
+                        <div className="max-w-xs truncate text-gray-500" title={contact.message}>
+                          {contact.message}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 border-b text-right">
+                        <div className="flex justify-end space-x-2">
+                          <button
+                            onClick={() => {
+                              const mailtoBody = encodeURIComponent(
+                                `Hello ${contact.name},\n\nThank you for your message. I'm writing in response to your inquiry.\n\nBest regards,\n${process.env.COMPANY_NAME}`
+                              );
+                              window.open(`mailto:${contact.email}?subject=Re: Your Inquiry&body=${mailtoBody}`);
+                            }}
+                            className="p-2 rounded-lg hover:bg-blue-100 transition-all-smooth text-blue-600"
+                            title="Reply by email"
+                          >
+                            <ExternalLink className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(contact._id)}
+                            className="p-2 rounded-lg hover:bg-red-100 transition-all-smooth text-red-500"
+                            title="Delete contact"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-6 flex items-center justify-between">
+              <div className="text-sm text-gray-500">
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalContacts)} of {totalContacts} contacts
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all-smooth"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all-smooth"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          </>
         ) : (
           <div className="text-center py-8 text-gray-500">
             {contacts.length === 0 ? (

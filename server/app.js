@@ -6,8 +6,17 @@ const cors = require('cors');
 
 const app = express();
 
-// Middleware
-app.use(cors({ origin: '*' }));
+// Middleware for CORS
+app.use(cors({
+  origin: '*', // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
+  credentials: false // Set to true if you need to allow credentials (cookies, etc.)
+}));
+
+// Handle preflight OPTIONS requests
+app.options('*', cors()); // Enable preflight for all routes
+
 app.use(express.json({ limit: '50mb' }));
 
 // Connect to MongoDB
@@ -39,4 +48,4 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5002;
 
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`)); 
+app.listen(PORT, () => console.log(`Server started on port ${PORT}`));

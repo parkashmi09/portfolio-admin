@@ -53,6 +53,15 @@ app.use('/api/contacts', require('./routes/contactRoutes'));
 // Ensure the auth route is also defined if this server handles /api/auth/login
 app.use('/api/auth', require('./routes/authRoutes')); // Add this line if authRoutes exists
 
+
+// Placeholder for Admin routes (will be more specific later)
+app.use('/api/admin/blogs', require('./routes/blogRoutes'));
+app.use('/api/admin/contacts', require('./routes/contactRoutes'));
+app.use('/api/admin/logos', require('./routes/logoRoutes'));
+app.use('/api/admin/products', require('./routes/productRoutes'));
+app.use('/api/admin/services', require('./routes/serviceRoutes'));
+app.use('/api/admin/hero', require('./routes/heroRoutes'));
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);

@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5002/api';
+const API_BASE_URL = 'https://api.cfztechnologies.store/api';
 
 // Get all contacts with pagination
 export const getContacts = async (page = 1, limit = 10) => {
